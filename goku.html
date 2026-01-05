@@ -1,0 +1,247 @@
+<script>
+  // ---------- Juego 1: Trivia básica ----------
+  function startTrivia(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const questions = [
+      {q:'¿Quién creó el mundo?', opts:['Dios','Jonás','Moisés'], a:0},
+      {q:'¿Quién nació en un pesebre?', opts:['Jesús','Pedro','Saúl'], a:0},
+      {q:'¿Quién abrió el Mar Rojo?', opts:['Moisés','David','Noé'], a:0},
+      {q:'¿Quién construyó un arca?', opts:['Noé','Abraham','Jacob'], a:0}
+    ];
+    let idx=0, score=0;
+    const container = document.getElementById('gameArea');
+    function render(){
+      if(idx>=questions.length){
+        container.innerHTML = `<div class="card"><h3>Trivia finalizada</h3><p>Puntos: ${score}</p><button onclick="startTrivia()" class="game-btn">Jugar otra vez</button></div>`;
+        addScore(score);
+        return;
+      }
+      const q = questions[idx];
+      container.innerHTML = `<div class="card"><h3>Trivia: ${q.q}</h3><div>${q.opts.map((o,i)=>`<button class='game-btn' onclick='answerTrivia(${i})'>${o}</button>`).join('')}</div><p class='small'>Pregunta ${idx+1} de ${questions.length}</p></div>`;
+    }
+    window.answerTrivia = function(i){ if(i===questions[idx].a) score+=10; idx++; render(); }
+    render();
+  }
+
+
+  // ---------- Juego 2: Adivina el personaje ----------
+  function startGuess(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const items = [
+      {p:'Fui tragado por un gran pez', r:'jonas'},
+      {p:'Construí un arca', r:'noe'},
+      {p:'Abrí el mar rojo', r:'moises'},
+      {p:'Fui rey y poeta', r:'david'}
+    ];
+    const chosen = items[Math.floor(Math.random()*items.length)];
+    const container = document.getElementById('gameArea');
+    container.innerHTML = `<div class='card'><h3>Adivina el personaje</h3><p class='small'>Pista: ${chosen.p}</p><input id='guessInput' placeholder='tu respuesta...' style='padding:10px;border-radius:8px;margin-top:8px;width:80%'><div style='margin-top:8px'><button class='game-btn' onclick='checkGuess()'>Responder</button></div><p id='guessRes' class='small'></p></div>`;
+    
+    window.checkGuess = function(){
+      const val = document.getElementById('guessInput').value.trim().toLowerCase();
+      const res = document.getElementById('guessRes');
+      if(val===chosen.r){ res.innerText='¡Correcto! +15 puntos'; addScore(15);} 
+      else { res.innerText='Intenta otra vez.'; }
+    }
+  }
+
+
+  // ---------- Juego 3: Memoria ----------
+  function startMemory(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const pairs = ['dios','jesus','noe','moises','david','jonas'];
+    const items = pairs.concat(pairs).sort(()=>Math.random()-0.5);
+    const container = document.getElementById('gameArea');
+    let flipped = []; let matched = [];
+    
+    container.innerHTML = `<div class='card'><h3>Memoria: Encuentra pares</h3><div id='memGrid' style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px'></div><p id='memInfo' class='small'></p></div>`;
+    const grid = document.getElementById('memGrid');
+    
+    items.forEach((it,i)=>{
+      const btn = document.createElement('button');
+      btn.className='game-btn';
+      btn.style.background='#fff';
+      btn.style.color='#333';
+      btn.style.border='1px solid #eee';
+      btn.innerText='?';
+      btn.dataset.val=it;
+      btn.dataset.i=i;
+
+      btn.addEventListener('click', ()=>{
+        if(matched.includes(i) || flipped.map(f=>f.i).includes(i)) return;
+        flip(i,btn);
+      });
+      grid.appendChild(btn);
+    });
+
+    function flip(i,btn){
+      flipped.push({i,btn});
+      btn.innerText = btn.dataset.val;
+
+      if(flipped.length===2){
+        const [a,b]=flipped;
+
+        if(a.btn.dataset.val===b.btn.dataset.val){
+          matched.push(a.i,b.i);
+          a.btn.disabled=true; b.btn.disabled=true;
+          document.getElementById('memInfo').innerText='¡Par encontrado!';
+          addScore(5);
+        } else {
+          setTimeout(()=>{ a.btn.innerText='?'; b.btn.innerText='?'; },700);
+        }
+
+        flipped=[];
+
+        if(matched.length===items.length){
+          document.getElementById('memInfo').innerText='¡Juego completado! +20 puntos';
+          addScore(20);
+        }
+      }
+    }
+  }
+
+
+  // ---------- Juego 4: Completa el Versículo ----------
+  function startVerse(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const verses = [
+      {full:'Ama a tu prójimo como a ti mismo', blank:'Ama a tu ____ como a ti mismo', ans:'prójimo'},
+      {full:'El Señor es mi pastor, nada me faltará', blank:'El Señor es mi ____, nada me faltará', ans:'pastor'}
+    ];
+    const v = verses[Math.floor(Math.random()*verses.length)];
+    const container = document.getElementById('gameArea');
+
+    container.innerHTML = `<div class='card'><h3>Completa el versículo</h3><p class='small'>${v.blank}</p><input id='verseIn' placeholder='palabra faltante' style='padding:10px;border-radius:8px'><div style='margin-top:8px'><button class='game-btn' onclick='checkVerse()'>Comprobar</button></div><p id='verseRes' class='small'></p></div>`;
+
+    window.checkVerse = function(){
+      const val=document.getElementById('verseIn').value.trim().toLowerCase();
+      const res=document.getElementById('verseRes');
+      if(val===v.ans){ res.innerText='¡Correcto! +10 puntos'; addScore(10);}
+      else { res.innerText='Intenta nuevamente.'; }
+    }
+  }
+
+
+  // ---------- Juego 5: Rompecabezas ----------
+  function startPuzzle(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const puzzles = [
+      {scr:'mundo el creó Dios', sol:'Dios creó el mundo'},
+      {scr:'nació Jesús en pesebre', sol:'Jesús nació en pesebre'}
+    ];
+    const p = puzzles[Math.floor(Math.random()*puzzles.length)];
+    const words = p.scr.split(' ').sort(()=>Math.random()-0.5);
+    const container = document.getElementById('gameArea');
+
+    container.innerHTML = `<div class='card'><h3>Rompecabezas de frase</h3><p class='small'>Ordena las palabras:</p><div id='puzzleWords' style='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px'></div><div style='margin-top:12px'><button class='game-btn' onclick='checkPuzzle()'>Comprobar</button></div><p id='puzzleRes' class='small'></p></div>`;
+
+    const box=document.getElementById('puzzleWords');
+
+    words.forEach(w=>{
+      const b=document.createElement('button');
+      b.className='game-btn';
+      b.style.background='#fff';
+      b.style.color='#333';
+      b.style.border='1px solid #eee';
+      b.innerText=w;
+
+      b.addEventListener('click', ()=>{
+        b.style.opacity=0.5;
+        b.disabled=true;
+
+        const span=document.createElement('span');
+        span.innerText=w+' ';
+        span.dataset.w=w;
+        span.style.padding='6px';
+        span.style.background='#e8faff';
+        span.style.borderRadius='6px';
+        span.style.cursor='pointer';
+
+        span.addEventListener('click', ()=>{
+          b.disabled=false;
+          b.style.opacity=1;
+          span.remove();
+        });
+
+        box.appendChild(span);
+      });
+
+      box.appendChild(b);
+    });
+
+    window.checkPuzzle = function(){
+      const chosen = Array.from(document.querySelectorAll('#puzzleWords span')).map(s=>s.dataset.w).join(' ');
+      const res=document.getElementById('puzzleRes');
+      if(chosen===p.sol){ res.innerText='¡Excelente! +15 puntos'; addScore(15);}
+      else res.innerText='Aún no es correcto.';
+    }
+  }
+
+
+  // ---------- Juego 6: Ordena la Historia ----------
+  function startOrder(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const events = ['Noé construyó el arca','El diluvio llegó','Las aves salieron','El arca quedó en tierra firme'];
+    const shuffled = events.map(e=>({text:e,id:Math.random()})).sort(()=>Math.random()-0.5);
+    const container = document.getElementById('gameArea');
+
+    container.innerHTML = `<div class='card'><h3>Ordena la historia</h3><p class='small'>Coloca los eventos en orden:</p><div id='orderArea' style='margin-top:8px'></div><div style='margin-top:10px'><button class='game-btn' onclick='checkOrder()'>Comprobar orden</button></div><p id='orderRes' class='small'></p></div>`;
+
+    const area=document.getElementById('orderArea');
+
+    shuffled.forEach(it=>{
+      const b=document.createElement('div');
+      b.className='game-btn';
+      b.style.display='block';
+      b.style.margin='6px 0';
+      b.dataset.text=it.text;
+      b.innerText=it.text;
+      b.onclick=function(){ area.appendChild(b); };
+      area.appendChild(b);
+    });
+
+    window.checkOrder = function(){
+      const current = Array.from(area.children).map(c=>c.dataset.text);
+      let score=0;
+      for(let i=0;i<events.length;i++){
+        if(current[i]===events[i]) score++;
+      }
+      const res=document.getElementById('orderRes');
+      if(score===events.length){ res.innerText='¡Perfecto! +20 puntos'; addScore(20);}
+      else { res.innerText=`Aciertos: ${score}.`; }
+    }
+  }
+
+
+  // ---------- Juego 7: Palabra Revuelta ----------
+  function startScramble(){
+    markPlayed();
+    document.getElementById("gameArea").scrollIntoView({behavior:"smooth"});
+
+    const words=[{w:'jesus'},{w:'dios'},{w:'noe'},{w:'moises'}];
+    const chosen=words[Math.floor(Math.random()*words.length)].w;
+    const scrambled = chosen.split('').sort(()=>Math.random()-0.5).join('');
+    const container=document.getElementById('gameArea');
+
+    container.innerHTML = `<div class='card'><h3>Palabra revuelta</h3><p class='small'>Reordena las letras: <strong>${scrambled}</strong></p><input id='scrIn' placeholder='tu respuesta' style='padding:8px;border-radius:8px'><div style='margin-top:8px'><button class='game-btn' onclick='checkScramble("${chosen}")'>Comprobar</button></div><p id='scrRes' class='small'></p></div>`;
+
+    window.checkScramble = function(sol){
+      const v=document.getElementById('scrIn').value.trim().toLowerCase();
+      const res=document.getElementById('scrRes');
+      if(v===sol){ res.innerText='¡Bien hecho! +10 puntos'; addScore(10);}
+      else res.innerText='Incorrecto.';
+    }
+  }
+</script>
